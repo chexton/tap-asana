@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {"type": "number"},
+    "task_": {"type": "number"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "created_by": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "number"},
+        "name": {"type": "string"}
+      }
+    },
+    "text": {"type": "string"},
+    "type": {"type": "string"}
+  }
+}

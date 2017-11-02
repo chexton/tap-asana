@@ -20,6 +20,9 @@ def load_schemas():
     with open(get_abs_path('tap_asana/schemas/tasks.json')) as file:
         schemas['tasks'] = json.load(file)
 
+    with open(get_abs_path('tap_asana/schemas/stories.json')) as file:
+        schemas['stories'] = json.load(file)
+
     return schemas
 
 def get_all_tasks(config, state):
@@ -27,7 +30,6 @@ def get_all_tasks(config, state):
         since = format(state['tasks'])
     else:
         since = ''
-
 
     client = asana.Client.access_token(config['access_token'])
     latest_modified_time = None
@@ -38,6 +40,7 @@ def get_all_tasks(config, state):
 
             tasks = client.tasks.find_all({'project': project_id})
             tasks_output = []
+            stories_output = []
 
             for task in tasks:
                 counter.increment()
@@ -47,8 +50,15 @@ def get_all_tasks(config, state):
                 task.pop('hearts', None)
                 tasks_output.append(task)
 
+                stories = client.stories.find_by_task(task['id'])
+
+                for story in stories:
+                    story['task_id'] = task['id']
+                    stories_output.append(story)
+
             tasks_output
             singer.write_records('tasks', tasks_output)
+            singer.write_records('stories', stories_output)
 
     state['tasks'] = str(datetime.datetime.now())
     return state
@@ -62,6 +72,7 @@ def do_sync(config, state):
         logger.info('Replicating all tasks')
 
     singer.write_schema('tasks', schemas['tasks'], 'id')
+    singer.write_schema('stories', schemas['stories'], 'id')
     state = get_all_tasks(config, state)
     singer.write_state(state)
 
